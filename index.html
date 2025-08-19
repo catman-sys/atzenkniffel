@@ -1,1 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Kniffel Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Eigenes, externes CSS (bitte im nächsten Schritt anlegen) -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎲 Kniffel Online</h1>
+    <!-- Bereich für das Spielfeld und die Würfel -->
+    <div id="game-area">
+      <div id="dice-row"></div>
+      <button id="rollBtn">Würfeln</button>
+    </div>
+    <!-- Wertungstabelle -->
+    <h2>Wertungstabelle</h2>
+    <form id="score-form">
+      <table id="score-table">
+        <!-- Kopfzeile mit Kategorien, fügen wir gleich schrittweise aus JS ein! -->
+      </table>
+    </form>
+    <div id="message"></div>
+  </div>
+  <!-- Spiellogik in externer Datei -->
+  <script src="game.js"></script>
+</body>
+</html>
 
