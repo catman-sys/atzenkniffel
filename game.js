@@ -46,6 +46,7 @@ function resetVarsBot() {
   scoreBot = Array(16).fill(null);
   isPlayerTurn = true;
 }
+
 function renderDice() {
   diceRow.innerHTML = "";
   for(let i=0; i<5; i++) {
@@ -65,6 +66,7 @@ function renderDice() {
     diceRow.appendChild(div);
   }
 }
+
 function renderTable() {
   let html;
   if (mode==="solo") {
@@ -108,7 +110,7 @@ function renderTable() {
   scoreTable.innerHTML = html;
 }
 
-// Hilfsfunktionen wie zuvor
+// Hilfsfunktionen
 function countDice(n) { return dice.filter(d => d === n).length; }
 function sumDice() { return dice.reduce((a, b) => a + b, 0); }
 function hasAmount(n) { return [1,2,3,4,5,6].some(val => countDice(val) >= n); }
@@ -158,7 +160,7 @@ window.enterScoreSolo = function(idx) {
   renderTable();
   message.innerText = "Neue Runde – Würfeln!";
 };
-// Bot-Modus (wie Bot-Code zuvor, nur in Funktion ausgelagert)
+// Bot-Modus (Wertung für Mensch, dann Bot-Aktion)
 window.enterScoreBot = function(idx) {
   if(rollsLeft > 0 || scorePlayer[idx] !== null || idx===6||idx===7||idx===15||!isPlayerTurn) return;
   let val = 0;
@@ -211,7 +213,7 @@ rollBtn.onclick = () => {
   }
 };
 
-// Ablauf Botzug
+// Botzug
 function botTurn() {
   setTimeout(function() {
     dice = [1,1,1,1,1];
