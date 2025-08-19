@@ -4,28 +4,50 @@
   <meta charset="UTF-8">
   <title>Kniffel Online</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Eigenes, externes CSS (bitte im nächsten Schritt anlegen) -->
+  <!-- Eigene Schriftart und Styles -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:700,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* -- Extra-Stil fürs Menü, falls style.css nicht gefunden wird -- */
+    body { background: linear-gradient(120deg,#667eea,#764ba2); font-family: 'Montserrat', sans-serif; min-height: 100vh;}
+    .container { margin:50px auto 0 auto; background: #fff; border-radius:18px; max-width:480px; box-shadow:0 8px 40px rgba(80,60,120,0.18); padding:2.4rem 1.4rem 2.4rem 1.4rem; text-align:center;}
+    h1 {color:#764ba2;margin-bottom:.4em;font-size:2.1em;letter-spacing:1px;}
+    .logo-dice {font-size:2.3em;vertical-align:-.15em;}
+    #mode-select {display:flex;flex-direction:column;gap:17px;margin:1.6em 0 2em 0;}
+    #mode-select button {font-size: 1.15rem;background: linear-gradient(90deg, #7f7fd5 0%, #86a8e7 80%, #91eac9 100%);color: white;font-weight: bold;border: none;border-radius: 9px;box-shadow: 0 2px 13px rgba(90,60,140,0.10);padding:.8em 2em;cursor:pointer;transition: background .21s, transform .11s;}
+    #mode-select button:disabled {background: #d5dbef; opacity:.6; color:#888; cursor: not-allowed;}
+    #mode-select button:hover:not(:disabled) {background: linear-gradient(120deg, #6a82fb 50%, #fc5c7d 100%); transform:scale(1.035);}
+    #game-area {margin-top:1.7em;}
+    #btn-back {background: #eee;color: #764ba2;border: none;border-radius: 7px;padding: .5em 1.5em;font-weight:600;cursor:pointer;transition:background .19s;}
+    #btn-back:hover {background:#ded7ed;}
+    @media (max-width: 600px) {.container{max-width:97vw;padding:1.2rem;}h1{font-size:1.3em;}}
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎲 Kniffel Online</h1>
-    <!-- Bereich für das Spielfeld und die Würfel -->
-    <div id="game-area">
+
+    <h1><span class="logo-dice">🎲</span> Kniffel Online</h1>
+
+    <!-- Spielmodus-Auswahl -->
+    <div id="mode-select">
+      <button id="btn-solo">Solo spielen</button>
+      <button id="btn-bot">Gegen Bot</button>
+      <button id="btn-online" disabled>Online (bald verfügbar)</button>
+    </div>
+
+    <!-- Spielfeld -->
+    <div id="game-area" style="display:none;">
       <div id="dice-row"></div>
       <button id="rollBtn">Würfeln</button>
+      <h2>Wertungstabelle</h2>
+      <form id="score-form">
+        <table id="score-table"></table>
+      </form>
+      <div id="message"></div>
+      <button id="btn-back" style="margin-top:1em;">Zurück zur Auswahl</button>
     </div>
-    <!-- Wertungstabelle -->
-    <h2>Wertungstabelle</h2>
-    <form id="score-form">
-      <table id="score-table">
-        <!-- Kopfzeile mit Kategorien, fügen wir gleich schrittweise aus JS ein! -->
-      </table>
-    </form>
-    <div id="message"></div>
+
   </div>
-  <!-- Spiellogik in externer Datei -->
   <script src="game.js"></script>
 </body>
 </html>
-
