@@ -1,4 +1,7 @@
 // game.js – Auswahl zwischen Solo, Bot, Online (Vorlage)
+function randDice() {
+  return Math.floor(Math.random() * 6) + 1;
+}
 
 let mode = null; // "solo"|"bot"|"online"
 
