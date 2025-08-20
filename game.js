@@ -1,4 +1,5 @@
-// game.js – Auswahl zwischen Solo, Bot, Online (Vorlage) [FIXED]
+// game.js – Korrigierte Version für Solo/Bot mit sauberer Wertungslogik
+
 function randDice() {
   return Math.floor(Math.random() * 6) + 1;
 }
@@ -6,15 +7,15 @@ function randDice() {
 let mode = null; // "solo"|"bot"|"online"
 
 const modeSelect = document.getElementById('mode-select');
-const gameArea = document.getElementById('game-area');
-const btnSolo = document.getElementById('btn-solo');
-const btnBot = document.getElementById('btn-bot');
-const btnOnline = document.getElementById('btn-online');
-const btnBack = document.getElementById('btn-back');
-const diceRow = document.getElementById("dice-row");
-const rollBtn = document.getElementById("rollBtn");
+const gameArea   = document.getElementById('game-area');
+const btnSolo    = document.getElementById('btn-solo');
+const btnBot     = document.getElementById('btn-bot');
+const btnOnline  = document.getElementById('btn-online');
+const btnBack    = document.getElementById('btn-back');
+const diceRow    = document.getElementById("dice-row");
+const rollBtn    = document.getElementById("rollBtn");
 const scoreTable = document.getElementById("score-table");
-const message = document.getElementById("message");
+const message    = document.getElementById("message");
 
 const categories = [
   "Einser", "Zweier", "Dreier", "Vierer", "Fünfer", "Sechser",
@@ -23,18 +24,19 @@ const categories = [
 ];
 const diceUnicode = ["","⚀","⚁","⚂","⚃","⚄","⚅"];
 
-// Gemeinsame Variablen (werden beim Neustart überschrieben)
+// State
 let dice = [1,1,1,1,1];
 let held = [false, false, false, false, false];
 let rollsLeft = 3;
 
-// Für Solo
+// Solo
 let scoreSolo = Array(16).fill(null);
-// Für Bot-Spiel
+// Bot
 let scorePlayer = Array(16).fill(null);
-let scoreBot = Array(16).fill(null);
+let scoreBot    = Array(16).fill(null);
 let isPlayerTurn = true;
 
+// ----- Init / Reset -----
 function resetVarsSolo() {
   dice = [1,1,1,1,1];
   held = [false, false, false, false, false];
@@ -46,24 +48,23 @@ function resetVarsBot() {
   held = [false, false, false, false, false];
   rollsLeft = 3;
   scorePlayer = Array(16).fill(null);
-  scoreBot = Array(16).fill(null);
+  scoreBot    = Array(16).fill(null);
   isPlayerTurn = true;
 }
 
+// ----- Render -----
 function renderDice() {
   diceRow.innerHTML = "";
-  for(let i=0; i<5; i++) {
+  for (let i = 0; i < 5; i++) {
     const div = document.createElement("div");
     div.className = "dice" + (held[i] ? " selected" : "");
     div.innerHTML = diceUnicode[dice[i]];
     div.onclick = () => {
-      if (mode==="solo" && rollsLeft < 3 && rollsLeft > 0) {
-        held[i] = !held[i];
-        renderDice();
+      if (mode === "solo" && rollsLeft < 3 && rollsLeft > 0) {
+        held[i] = !held[i]; renderDice();
       }
-      if (mode==="bot" && rollsLeft < 3 && rollsLeft > 0 && isPlayerTurn) {
-        held[i] = !held[i];
-        renderDice();
+      if (mode === "bot" && rollsLeft < 3 && rollsLeft > 0 && isPlayerTurn) {
+        held[i] = !held[i]; renderDice();
       }
     };
     diceRow.appendChild(div);
@@ -72,12 +73,12 @@ function renderDice() {
 
 function renderTable() {
   let html;
-  if (mode==="solo") {
+  if (mode === "solo") {
     html = "<tr><th>Kategorie</th><th>Punkte</th></tr>";
     categories.forEach((cat, idx) => {
-      let value = scoreSolo[idx];
-      let locked = value !== null;
-      let dis = (locked || idx === 6 || idx === 7 || idx === 15) ? "disabled" : "";
+      const value  = scoreSolo[idx];
+      const locked = value !== null;
+      const dis = (locked || idx === 6 || idx === 7 || idx === 15) ? "disabled" : "";
       html += `<tr>
         <td>${cat}</td>
         <td>
@@ -87,12 +88,12 @@ function renderTable() {
             style="cursor:${(!locked && rollsLeft===0 && idx < 15) ? 'pointer' : 'not-allowed'};">
         </td></tr>`;
     });
-  } else if (mode==="bot") {
+  } else if (mode === "bot") {
     html = "<tr><th>Kategorie</th><th>Du</th><th>Bot</th></tr>";
     categories.forEach((cat, idx) => {
-      let valP = scorePlayer[idx] !== null ? scorePlayer[idx] : "";
-      let valB = scoreBot[idx] !== null ? scoreBot[idx] : "";
-      let locked = scorePlayer[idx] !== null || idx === 6 || idx === 7 || idx === 15;
+      const valP = scorePlayer[idx] !== null ? scorePlayer[idx] : "";
+      const valB = scoreBot[idx]    !== null ? scoreBot[idx]    : "";
+      const locked = scorePlayer[idx] !== null || idx === 6 || idx === 7 || idx === 15;
       html += `<tr>
         <td>${cat}</td>
         <td>
@@ -100,170 +101,163 @@ function renderTable() {
             onclick="window.enterScoreBot(${idx})"
             style="cursor:${(!locked && isPlayerTurn && rollsLeft===0 && idx < 15) ? 'pointer':'not-allowed'};">
         </td>
-        <td>
-          <input type="text" value="${valB}" readonly disabled>
-        </td>
+        <td><input type="text" value="${valB}" readonly disabled></td>
       </tr>`;
     });
   }
-  // Online (Platzhalter)
-  if (mode==="online") {
+  if (mode === "online") {
     html = `<tr><td colspan="3">Der Online-Modus ist in Vorbereitung! Bald kannst du gegen Freunde spielen.</td></tr>`;
   }
   scoreTable.innerHTML = html;
 }
 
-// Hilfsfunktionen
+// ----- Helpers -----
 function countDice(n) { return dice.filter(d => d === n).length; }
-function sumDice() { return dice.reduce((a, b) => a + b, 0); }
-function hasAmount(n) { return [1,2,3,4,5,6].some(val => countDice(val) >= n); }
+function sumDice()    { return dice.reduce((a, b) => a + b, 0); }
+function hasAmount(n) { return [1,2,3,4,5,6].some(v => countDice(v) >= n); }
 function isFullHouse() {
-  let vals = [1,2,3,4,5,6].map(c => countDice(c));
+  const vals = [1,2,3,4,5,6].map(c => countDice(c));
   return vals.includes(3) && vals.includes(2);
 }
 function isSmallStraight() {
-  let uniq = [...new Set(dice)].sort();
-  let str = uniq.join("");
+  const uniq = [...new Set(dice)].sort(); const str = uniq.join("");
   return str.includes("1234") || str.includes("2345") || str.includes("3456");
 }
 function isLargeStraight() {
-  let uniq = [...new Set(dice)].sort();
-  let str = uniq.join("");
+  const uniq = [...new Set(dice)].sort(); const str = uniq.join("");
   return str === "12345" || str === "23456";
 }
-function isKniffel() { return [1,2,3,4,5,6].some(val => countDice(val) === 5); }
+function isKniffel() { return [1,2,3,4,5,6].some(v => countDice(v) === 5); }
 
-// --- Gemeinsame Summen-/Bonusberechnung ---
-function recomputeTotals(arr){
+// zentrales Recompute (korrekte Indizes!)
+function recomputeTotals(arr) {
   // Summe oben (Index 6)
   let upper = 0;
-  for(let j=0;j<=5;j++) upper += arr[j]||0;
+  for (let j = 0; j <= 5; j++) upper += arr[j] || 0;
   arr[6] = upper;
   // Bonus (Index 7)
   arr[7] = upper >= 63 ? 35 : 0;
-  // Gesamt (Index 15) – Summe aller gesetzten Felder außer 15 selbst
+  // Gesamt (Index 15)
   let total = 0;
-  for(let k=0; k<15; k++) if(arr[k]!==null && k!==15) total += arr[k];
+  for (let k = 0; k < 15; k++) if (arr[k] !== null && k !== 15) total += arr[k];
   arr[15] = total;
 }
 
-// Wertungslogik: Für Solo-Modus
+// ----- Wertung Solo -----
 window.enterScoreSolo = function(idx) {
-  if(rollsLeft > 0 || scoreSolo[idx] !== null || idx===6||idx===7||idx===15) return;
-  let val = 0;
-  if(idx<=5) val = countDice(idx+1)*(idx+1);
-  else if(idx===8) val = hasAmount(3) ? sumDice() : 0;
-  else if(idx===9) val = hasAmount(4) ? sumDice() : 0;
-  else if(idx===10) val = isFullHouse() ? 25 : 0;
-  else if(idx===11) val = isSmallStraight() ? 30 : 0;
-  else if(idx===12) val = isLargeStraight() ? 40 : 0;
-  else if(idx===13) val = isKniffel() ? 50 : 0;
-  else if(idx===14) val = sumDice();
-  scoreSolo[idx] = val;
+  if (rollsLeft > 0 || scoreSolo[idx] !== null || idx === 6 || idx === 7 || idx === 15) return;
 
-  // Bonus/Summen (FIX: richtige Indizes 6,7,15)
+  let val = 0;
+  if (idx <= 5)      val = countDice(idx + 1) * (idx + 1);
+  else if (idx === 8)  val = hasAmount(3) ? sumDice() : 0;
+  else if (idx === 9)  val = hasAmount(4) ? sumDice() : 0;
+  else if (idx === 10) val = isFullHouse() ? 25 : 0;
+  else if (idx === 11) val = isSmallStraight() ? 30 : 0;
+  else if (idx === 12) val = isLargeStraight() ? 40 : 0;
+  else if (idx === 13) val = isKniffel() ? 50 : 0;
+  else if (idx === 14) val = sumDice();
+
+  scoreSolo[idx] = val;
   recomputeTotals(scoreSolo);
 
   dice = [1,1,1,1,1];
-  held = [false, false, false, false, false];
+  held = [false,false,false,false,false];
   rollsLeft = 3;
   renderDice();
   renderTable();
   message.innerText = "Neue Runde – Würfeln!";
 };
 
-// Bot-Modus (Wertung für Mensch, dann Bot-Aktion)
+// ----- Wertung Spieler im Bot-Modus -----
 window.enterScoreBot = function(idx) {
-  if(rollsLeft > 0 || scorePlayer[idx] !== null || idx===6||idx===7||idx===15||!isPlayerTurn) return;
-  let val = 0;
-  if(idx<=5) val = countDice(idx+1)*(idx+1);
-  else if(idx===8) val = hasAmount(3) ? sumDice() : 0;
-  else if(idx===9) val = hasAmount(4) ? sumDice() : 0;
-  else if(idx===10) val = isFullHouse() ? 25 : 0;
-  else if(idx===11) val = isSmallStraight() ? 30 : 0;
-  else if(idx===12) val = isLargeStraight() ? 40 : 0;
-  else if(idx===13) val = isKniffel() ? 50 : 0;
-  else if(idx===14) val = sumDice();
-  scorePlayer[idx] = val;
+  if (rollsLeft > 0 || scorePlayer[idx] !== null || idx === 6 || idx === 7 || idx === 15 || !isPlayerTurn) return;
 
-  // Bonus + Summe (FIX)
+  let val = 0;
+  if (idx <= 5)      val = countDice(idx + 1) * (idx + 1);
+  else if (idx === 8)  val = hasAmount(3) ? sumDice() : 0;
+  else if (idx === 9)  val = hasAmount(4) ? sumDice() : 0;
+  else if (idx === 10) val = isFullHouse() ? 25 : 0;
+  else if (idx === 11) val = isSmallStraight() ? 30 : 0;
+  else if (idx === 12) val = isLargeStraight() ? 40 : 0;
+  else if (idx === 13) val = isKniffel() ? 50 : 0;
+  else if (idx === 14) val = sumDice();
+
+  scorePlayer[idx] = val;
   recomputeTotals(scorePlayer);
 
   isPlayerTurn = false;
   botTurn();
 };
 
+// ----- Würfeln -----
 rollBtn.onclick = () => {
-  if (mode==="solo") {
-    if (rollsLeft === 0) {
-      message.innerText = "Bitte trage eine Wertung ein!";
-      return;
-    }
-    for(let i=0;i<5;i++) if (!held[i]) dice[i]=randDice();
+  if (mode === "solo") {
+    if (rollsLeft === 0) { message.innerText = "Bitte trage eine Wertung ein!"; return; }
+    for (let i = 0; i < 5; i++) if (!held[i]) dice[i] = randDice();
     renderDice();
     rollsLeft -= 1;
-    if (rollsLeft === 0) message.innerText = "Wertung eintragen!";
-    else message.innerText = `Noch ${rollsLeft} Wurf(e). Zum Halten Würfel anklicken.`;
+    message.innerText = (rollsLeft === 0)
+      ? "Wertung eintragen!"
+      : `Noch ${rollsLeft} Wurf(e). Zum Halten Würfel anklicken.`;
   }
-  if (mode==="bot") {
+  if (mode === "bot") {
     if (!isPlayerTurn) return;
-    if (rollsLeft === 0) {
-      message.innerText = "Bitte Wertung wählen!";
-      return;
-    }
-    for(let i=0;i<5;i++) if (!held[i]) dice[i]=randDice();
+    if (rollsLeft === 0) { message.innerText = "Bitte Wertung wählen!"; return; }
+    for (let i = 0; i < 5; i++) if (!held[i]) dice[i] = randDice();
     renderDice();
     rollsLeft -= 1;
-    if (rollsLeft === 0) message.innerText = "Deine Wertung eintragen!";
-    else message.innerText = `Noch ${rollsLeft} Wurf(e). Würfel zum Halten klickbar.`;
+    message.innerText = (rollsLeft === 0)
+      ? "Deine Wertung eintragen!"
+      : `Noch ${rollsLeft} Wurf(e). Würfel zum Halten klickbar.`;
   }
 };
 
-// Botzug
+// ----- Botzug -----
 function botTurn() {
   setTimeout(function() {
     dice = [1,1,1,1,1];
-    held = [false, false, false, false, false];
+    held = [false,false,false,false,false];
     rollsLeft = 3;
     renderDice();
     message.innerText = "Bot würfelt ...";
-    // Drei Würfe stumpf
-    for (let t=0;t<3;t++) {
-      for(let i=0;i<5;i++) if (!held[i]) dice[i]=randDice();
-    }
-    let idx = scoreBot.findIndex((v, i) => v === null && i !== 6 && i !== 7 && i !== 15);
-    let val = 0;
-    if(idx<=5) val = countDice(idx+1)*(idx+1);
-    else if(idx===8) val = hasAmount(3) ? sumDice() : 0;
-    else if(idx===9) val = hasAmount(4) ? sumDice() : 0;
-    else if(idx===10) val = isFullHouse() ? 25 : 0;
-    else if(idx===11) val = isSmallStraight() ? 30 : 0;
-    else if(idx===12) val = isLargeStraight() ? 40 : 0;
-    else if(idx===13) val = isKniffel() ? 50 : 0;
-    else if(idx===14) val = sumDice();
-    scoreBot[idx] = val;
 
-    // Bonus + Summe (FIX)
+    // sehr einfache Bot-Logik: 3x voll würfeln, dann erste freie Kategorie belegen
+    for (let t = 0; t < 3; t++) {
+      for (let i = 0; i < 5; i++) if (!held[i]) dice[i] = randDice();
+    }
+
+    const idx = scoreBot.findIndex((v, i) => v === null && i !== 6 && i !== 7 && i !== 15);
+    let val = 0;
+    if (idx <= 5)       val = countDice(idx + 1) * (idx + 1);
+    else if (idx === 8)  val = hasAmount(3) ? sumDice() : 0;
+    else if (idx === 9)  val = hasAmount(4) ? sumDice() : 0;
+    else if (idx === 10) val = isFullHouse() ? 25 : 0;
+    else if (idx === 11) val = isSmallStraight() ? 30 : 0;
+    else if (idx === 12) val = isLargeStraight() ? 40 : 0;
+    else if (idx === 13) val = isKniffel() ? 50 : 0;
+    else if (idx === 14) val = sumDice();
+
+    scoreBot[idx] = val;
     recomputeTotals(scoreBot);
 
     isPlayerTurn = true;
     renderTable();
+
     dice = [1,1,1,1,1];
-    held = [false, false, false, false, false];
+    held = [false,false,false,false,false];
     rollsLeft = 3;
     renderDice();
     message.innerText = "Dein Zug! 'Würfeln' klicken.";
   }, 900);
 }
 
-// Spielmodus-Auswahllogik
+// ----- Modus-Auswahl -----
 btnSolo.onclick = function() {
   mode = "solo";
   modeSelect.style.display = "none";
   gameArea.style.display = "block";
   resetVarsSolo();
-  renderDice();
-  renderTable();
+  renderDice(); renderTable();
   message.innerText = "Solo-Spiel – Dein Zug!";
 };
 btnBot.onclick = function() {
@@ -271,8 +265,7 @@ btnBot.onclick = function() {
   modeSelect.style.display = "none";
   gameArea.style.display = "block";
   resetVarsBot();
-  renderDice();
-  renderTable();
+  renderDice(); renderTable();
   message.innerText = "Du beginnst gegen den Bot!";
 };
 btnOnline.onclick = function() {
