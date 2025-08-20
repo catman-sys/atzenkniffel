@@ -1,4 +1,4 @@
-// game.js – Auswahl zwischen Solo, Bot, Online (Vorlage)
+// game.js – Auswahl zwischen Solo, Bot, Online (Vorlage) [FIXED]
 function randDice() {
   return Math.floor(Math.random() * 6) + 1;
 }
@@ -133,6 +133,20 @@ function isLargeStraight() {
 }
 function isKniffel() { return [1,2,3,4,5,6].some(val => countDice(val) === 5); }
 
+// --- Gemeinsame Summen-/Bonusberechnung ---
+function recomputeTotals(arr){
+  // Summe oben (Index 6)
+  let upper = 0;
+  for(let j=0;j<=5;j++) upper += arr[j]||0;
+  arr[6] = upper;
+  // Bonus (Index 7)
+  arr[7] = upper >= 63 ? 35 : 0;
+  // Gesamt (Index 15) – Summe aller gesetzten Felder außer 15 selbst
+  let total = 0;
+  for(let k=0; k<15; k++) if(arr[k]!==null && k!==15) total += arr[k];
+  arr[15] = total;
+}
+
 // Wertungslogik: Für Solo-Modus
 window.enterScoreSolo = function(idx) {
   if(rollsLeft > 0 || scoreSolo[idx] !== null || idx===6||idx===7||idx===15) return;
@@ -147,14 +161,8 @@ window.enterScoreSolo = function(idx) {
   else if(idx===14) val = sumDice();
   scoreSolo[idx] = val;
 
-  // Bonus/Summen
-  let sum = 0;
-  for(let j=0;j<=5;j++) sum += scoreSolo[j]||0;
-  scoreSolo[6] = sum;
-  scoreSolo[1] = sum >= 63 ? 35 : 0;
-  let total = 0;
-  for(let k=0; k<15; k++) if(scoreSolo[k]!==null && k!==15) total += scoreSolo[k];
-  scoreSolo[2] = total;
+  // Bonus/Summen (FIX: richtige Indizes 6,7,15)
+  recomputeTotals(scoreSolo);
 
   dice = [1,1,1,1,1];
   held = [false, false, false, false, false];
@@ -163,6 +171,7 @@ window.enterScoreSolo = function(idx) {
   renderTable();
   message.innerText = "Neue Runde – Würfeln!";
 };
+
 // Bot-Modus (Wertung für Mensch, dann Bot-Aktion)
 window.enterScoreBot = function(idx) {
   if(rollsLeft > 0 || scorePlayer[idx] !== null || idx===6||idx===7||idx===15||!isPlayerTurn) return;
@@ -177,14 +186,8 @@ window.enterScoreBot = function(idx) {
   else if(idx===14) val = sumDice();
   scorePlayer[idx] = val;
 
-  // Bonus + Summe
-  let sum = 0;
-  for(let j=0;j<=5;j++) sum += scorePlayer[j]||0;
-  scorePlayer[6] = sum;
-  scorePlayer[1] = sum >= 63 ? 35 : 0;
-  let total = 0;
-  for(let k=0; k<15; k++) if(scorePlayer[k]!==null && k!==15) total += scorePlayer[k];
-  scorePlayer[2] = total;
+  // Bonus + Summe (FIX)
+  recomputeTotals(scorePlayer);
 
   isPlayerTurn = false;
   botTurn();
@@ -239,13 +242,9 @@ function botTurn() {
     else if(idx===13) val = isKniffel() ? 50 : 0;
     else if(idx===14) val = sumDice();
     scoreBot[idx] = val;
-    let sum = 0;
-    for(let j=0;j<=5;j++) sum += scoreBot[j]||0;
-    scoreBot[6] = sum;
-    scoreBot[1] = sum >= 63 ? 35 : 0;
-    let total = 0;
-    for(let k=0; k<15; k++) if(scoreBot[k]!==null && k!==15) total += scoreBot[k];
-    scoreBot[2] = total;
+
+    // Bonus + Summe (FIX)
+    recomputeTotals(scoreBot);
 
     isPlayerTurn = true;
     renderTable();
